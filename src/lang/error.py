@@ -1,0 +1,51 @@
+from dataclasses import replace
+from typing import override
+
+from lang.position import Position
+
+
+def generate_string_with_arrows(pos_start: Position, pos_end: Position | None = None):
+    if pos_end is None:
+        pos_end = replace(pos_start)
+
+    lines = list(pos_start.ftxt.split("\n")[pos_start.ln - 1 : pos_end.ln])
+    txt = ""
+
+    if pos_start.ln == pos_end.ln:
+        txt += lines[0] + "\n"
+        txt += " " * (pos_start.col - 1) + "^" * (pos_end.col - pos_start.col + 1)
+
+    return txt
+
+
+def add_indent(txt: str, n: int = 1) -> str:
+    return "\n".join(map(lambda ln: " " * n + ln, txt.split("\n")))
+
+
+class Error:
+    def __init__(self, name: str, msg: str) -> None:
+        self.name: str = name
+        self.msg: str = msg
+
+    @override
+    def __repr__(self) -> str:
+        return f"{self.name}: {self.msg}"
+
+
+class PositionalError(Error):
+    def __init__(
+        self, name: str, msg: str, pos_start: Position, pos_end: Position | None = None
+    ) -> None:
+        super().__init__(name, msg)
+
+        self.pos_start: Position = pos_start
+        self.pos_end: Position = pos_end or replace(pos_start)
+
+    @override
+    def __repr__(self) -> str:
+        return f"{self.name}: '{self.msg}' at {self.pos_start.fn}, line {self.pos_start.ln}, col {self.pos_start.col}\n{add_indent(generate_string_with_arrows(self.pos_start, self.pos_end))}"
+
+
+class InvalidCharError(PositionalError):
+    def __init__(self, char: str, pos: Position) -> None:
+        super().__init__("InvalidCharError", char, pos)
