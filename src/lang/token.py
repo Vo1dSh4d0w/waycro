@@ -3,6 +3,10 @@ from enum import Enum
 
 
 class TokenType(Enum):
+    """
+    Enum for every token type.
+    """
+
     INT = 0
     FLOAT = 1
     IDENTIFIER = 2
@@ -33,5 +37,15 @@ class TokenType(Enum):
 
 @dataclass
 class Token:
+    """
+    A singular token.
+
+    type
+        the type of the token
+
+    value
+        an optional value of the token, defaults to None
+    """
+
     type: TokenType
     value: str | int | float | None = None
