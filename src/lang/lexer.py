@@ -20,6 +20,8 @@ KEYWORDS = {
     "forever",
     "fn",
     "return",
+    "exit",
+    "using",
 }
 
 
@@ -54,6 +56,16 @@ class Lexer:
 
         while (char := self.peek()) is not None:
             match char:
+                case ".":
+                    next_char = self.peek(1)
+                    if next_char is not None and next_char not in DIGITS:
+                        _ = self.consume()
+                        toks.append(Token(TokenType.DOT))
+                    else:
+                        tok, err = self.make_number()
+                        if err or tok is None:
+                            return None, err
+                        toks.append(tok)
                 case v if v in DIGITS:
                     tok, err = self.make_number()
                     if err or tok is None:
@@ -87,6 +99,24 @@ class Lexer:
                         toks.append(Token(TokenType.GE))
                     else:
                         toks.append(Token(TokenType.GT))
+                case ":":
+                    _ = self.consume()
+                    toks.append(Token(TokenType.COLON))
+                case "(":
+                    _ = self.consume()
+                    toks.append(Token(TokenType.LPAREN))
+                case ")":
+                    _ = self.consume()
+                    toks.append(Token(TokenType.RPAREN))
+                case "{":
+                    _ = self.consume()
+                    toks.append(Token(TokenType.LBRACE))
+                case "}":
+                    _ = self.consume()
+                    toks.append(Token(TokenType.RBRACE))
+                case ",":
+                    _ = self.consume()
+                    toks.append(Token(TokenType.COMMA))
                 case v if v in WHITESPACE:
                     _ = self.consume()
                 case _:

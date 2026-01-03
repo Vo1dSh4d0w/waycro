@@ -19,6 +19,14 @@ class TokenType(Enum):
     LE = 17
     GE = 18
     GT = 19
+    DOT = 20
+    COMMA = 21
+
+    COLON = 30
+    LPAREN = 31
+    RPAREN = 32
+    LBRACE = 33
+    RBRACE = 34
 
     EOF = 50
 
