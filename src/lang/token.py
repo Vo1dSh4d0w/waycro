@@ -1,5 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
+
+from lang.position import Position
 
 
 class TokenType(Enum):
@@ -48,4 +50,10 @@ class Token:
     """
 
     type: TokenType
+    pos_start: Position
+    pos_end: Position | None = None
     value: str | int | float | None = None
+
+    def __post_init__(self):
+        if self.pos_end is None:
+            self.pos_end = replace(self.pos_start)

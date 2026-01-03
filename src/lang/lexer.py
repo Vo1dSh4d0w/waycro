@@ -1,3 +1,4 @@
+from dataclasses import replace
 from string import ascii_letters, digits
 
 from lang.error import Error, InvalidCharError
@@ -89,7 +90,7 @@ class Lexer:
                     next_char = self.peek(1)
                     if next_char is not None and next_char not in DIGITS:
                         _ = self.consume()
-                        toks.append(Token(TokenType.DOT))
+                        toks.append(Token(TokenType.DOT, replace(self.pos)))
                     else:
                         tok, err = self.make_number()
                         if err or tok is None:
@@ -103,55 +104,57 @@ class Lexer:
                 case v if v in ALLOWED_CHARS_FIRST:
                     toks.append(self.make_identifier())
                 case "+":
+                    toks.append(Token(TokenType.PLUS, replace(self.pos)))
                     _ = self.consume()
-                    toks.append(Token(TokenType.PLUS))
                 case "-":
+                    toks.append(Token(TokenType.MINUS, replace(self.pos)))
                     _ = self.consume()
-                    toks.append(Token(TokenType.MINUS))
                 case "*":
+                    toks.append(Token(TokenType.MUL, replace(self.pos)))
                     _ = self.consume()
-                    toks.append(Token(TokenType.MUL))
                 case "/":
+                    toks.append(Token(TokenType.DIV, replace(self.pos)))
                     _ = self.consume()
-                    toks.append(Token(TokenType.DIV))
                 case "<":
+                    pos_start = replace(self.pos)
                     _ = self.consume()
                     if self.peek() == "=":
+                        toks.append(Token(TokenType.LE, pos_start, replace(self.pos)))
                         _ = self.consume()
-                        toks.append(Token(TokenType.LE))
                     else:
-                        toks.append(Token(TokenType.LT))
+                        toks.append(Token(TokenType.LT, pos_start))
                 case ">":
+                    pos_start = replace(self.pos)
                     _ = self.consume()
                     if self.peek() == "=":
+                        toks.append(Token(TokenType.GE, pos_start, replace(self.pos)))
                         _ = self.consume()
-                        toks.append(Token(TokenType.GE))
                     else:
-                        toks.append(Token(TokenType.GT))
+                        toks.append(Token(TokenType.GT, pos_start))
                 case ":":
+                    toks.append(Token(TokenType.COLON, replace(self.pos)))
                     _ = self.consume()
-                    toks.append(Token(TokenType.COLON))
                 case "(":
+                    toks.append(Token(TokenType.LPAREN, replace(self.pos)))
                     _ = self.consume()
-                    toks.append(Token(TokenType.LPAREN))
                 case ")":
+                    toks.append(Token(TokenType.RPAREN, replace(self.pos)))
                     _ = self.consume()
-                    toks.append(Token(TokenType.RPAREN))
                 case "{":
+                    toks.append(Token(TokenType.LBRACE, replace(self.pos)))
                     _ = self.consume()
-                    toks.append(Token(TokenType.LBRACE))
                 case "}":
+                    toks.append(Token(TokenType.RBRACE, replace(self.pos)))
                     _ = self.consume()
-                    toks.append(Token(TokenType.RBRACE))
                 case ",":
+                    toks.append(Token(TokenType.COMMA, replace(self.pos)))
                     _ = self.consume()
-                    toks.append(Token(TokenType.COMMA))
                 case v if v in WHITESPACE:
                     _ = self.consume()
                 case _:
-                    return None, InvalidCharError(char, self.pos)
+                    return None, InvalidCharError(char, replace(self.pos))
 
-        toks.append(Token(TokenType.EOF))
+        toks.append(Token(TokenType.EOF, replace(self.pos)))
         return toks, None
 
     def make_number(self) -> tuple[Token | None, Error | None]:
@@ -168,18 +171,21 @@ class Lexer:
         char: str | None
         num: str = ""
         is_float: bool = False
+        pos_start = replace(self.pos)
+        pos_end = replace(self.pos)
 
         while (char := self.peek()) is not None and char in DIGITS + ".":
             if char == ".":
                 if is_float:
                     return None, InvalidCharError(char, self.pos)
                 is_float = True
+            pos_end = replace(self.pos)
             num += self.consume()
 
         if is_float:
-            return Token(TokenType.FLOAT, float(num)), None
+            return Token(TokenType.FLOAT, pos_start, pos_end, float(num)), None
         else:
-            return Token(TokenType.INT, int(num)), None
+            return Token(TokenType.INT, pos_start, pos_end, int(num)), None
 
     def make_identifier(self) -> Token:
         """
@@ -192,11 +198,14 @@ class Lexer:
         """
         char: str | None
         val: str = ""
+        pos_start = replace(self.pos)
+        pos_end = replace(self.pos)
 
         while (char := self.peek()) is not None and char in ALLOWED_CHARS:
+            pos_end = replace(self.pos)
             val += self.consume()
 
         if val in KEYWORDS:
-            return Token(TokenType.KEYWORD, val)
+            return Token(TokenType.KEYWORD, pos_start, pos_end, val)
         else:
-            return Token(TokenType.IDENTIFIER, val)
+            return Token(TokenType.IDENTIFIER, pos_start, pos_end, val)
