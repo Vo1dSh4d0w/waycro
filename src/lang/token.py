@@ -27,6 +27,7 @@ class TokenType(Enum):
     GT = 19
     DOT = 20
     COMMA = 21
+    SEMI = 22
 
     COLON = 30
     LPAREN = 31

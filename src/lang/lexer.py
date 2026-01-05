@@ -5,12 +5,12 @@ from lang.error import Error, InvalidCharError
 from lang.position import Position
 from lang.token import Token, TokenType
 
-DIGITS = digits + "."
-ALLOWED_CHARS_FIRST = ascii_letters + "_"
-ALLOWED_CHARS = ALLOWED_CHARS_FIRST + digits
-WHITESPACE = "\n\t "
+DIGITS: str = digits + "."
+ALLOWED_CHARS_FIRST: str = ascii_letters + "_"
+ALLOWED_CHARS: str = ALLOWED_CHARS_FIRST + digits
+WHITESPACE: str = "\n\t "
 
-KEYWORDS = {
+KEYWORDS: set[str] = {
     "if",
     "else",
     "while",
@@ -133,6 +133,9 @@ class Lexer:
                         toks.append(Token(TokenType.GT, pos_start))
                 case ":":
                     toks.append(Token(TokenType.COLON, replace(self.pos)))
+                    _ = self.consume()
+                case ":":
+                    toks.append(Token(TokenType.SEMI, replace(self.pos)))
                     _ = self.consume()
                 case "(":
                     toks.append(Token(TokenType.LPAREN, replace(self.pos)))

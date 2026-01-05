@@ -1,6 +1,9 @@
 import argparse
+from typing import cast
 
 from lang.lexer import Lexer
+from lang.parser import Parser
+from lang.token import Token
 
 
 class Args:
@@ -25,7 +28,12 @@ def main():
         if err:
             print(err)
         else:
-            print(toks)
+            parser = Parser(cast(list[Token], toks))
+            res = parser.parse()
+            if res.error:
+                print(res.error)
+            else:
+                print(res.result)
 
 
 if __name__ == "__main__":

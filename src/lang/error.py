@@ -111,3 +111,12 @@ class InvalidCharError(PositionalError):
             the position of the invalid character
         """
         super().__init__("InvalidCharError", char, pos)
+
+
+class SyntaxError(PositionalError):
+    def __init__(
+        self, message: str, pos_start: Position, pos_end: Position | None = None
+    ) -> None:
+        super().__init__(
+            "SyntaxError", message, pos_start, pos_end or replace(pos_start)
+        )
