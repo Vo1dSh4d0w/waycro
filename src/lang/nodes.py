@@ -15,6 +15,11 @@ class BinOperation(Enum):
     DIV = 3
 
 
+class UnaryOperation(Enum):
+    PLUS = 0
+    MINUS = 1
+
+
 class Node:
     def __init__(self, pos_start: Position, pos_end: Position | None = None) -> None:
         self.pos_start: Position = pos_start
@@ -30,6 +35,18 @@ class NumberNode(Node):
     @override
     def __repr__(self) -> str:
         return f"NumberNode(value={self.value})"
+
+
+class UnaryOp(Node):
+    def __init__(self, pos_start: Position, operand: Node, op: UnaryOperation) -> None:
+        super().__init__(pos_start, operand.pos_end)
+
+        self.operand: Node = operand
+        self.op: UnaryOperation = op
+
+    @override
+    def __repr__(self) -> str:
+        return f"UnaryOp(op={self.op}, operand={self.operand})"
 
 
 class BinOp(Node):
@@ -63,6 +80,10 @@ class Scope(Node):
         super().__init__(pos_start, pos_end)
 
         self.stmt: list[Statement] = stmt
+
+    @override
+    def __repr__(self) -> str:
+        return f"Scope(stmt={self.stmt})"
 
 
 class Program(Node):

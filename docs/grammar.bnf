@@ -2,7 +2,7 @@
 
 <using-directive> ::= "using " <identifier>
 
-<statement> ::= <scope> | <expr> | <assignment> | <function-call> | <if-expr>
+<statement> ::= <scope> | <expr> ";" | <assignment> ";" | <if-expr>
 
 <scope> ::= "{" <statement>* "}"
 

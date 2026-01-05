@@ -7,9 +7,13 @@ from lang.nodes import (
     Node,
     NumberNode,
     Program,
+    Scope,
     Statement,
     StatementContent,
+    UnaryOp,
+    UnaryOperation,
 )
+from lang.position import Position
 from lang.token import Token, TokenType
 
 
@@ -80,6 +84,17 @@ class Parser:
                     f"Cannot convert token ({tok.type}) to binary operation."
                 )
 
+    def tok_to_unary_operation(self, tok: Token) -> UnaryOperation:
+        match tok.type:
+            case TokenType.PLUS:
+                return UnaryOperation.PLUS
+            case TokenType.MINUS:
+                return UnaryOperation.MINUS
+            case _:
+                raise Exception(
+                    f"Cannot convert token ({tok.type}) to unary operation."
+                )
+
     def parse(self) -> ParseResult:
         return self.parse_program()
 
@@ -100,11 +115,46 @@ class Parser:
     def parse_statement(self) -> ParseResult:
         res = ParseResult()
 
-        expr = res.register(self.parse_expr())
-        if expr.error:
-            return res.failure(expr.error)
+        next_tok = self.peek()
 
-        return res.success(Statement(cast(StatementContent, expr.result)))
+        if next_tok.type == TokenType.LBRACE:
+            scope = res.register(self.parse_scope())
+            if scope.error:
+                return res.failure(scope.error)
+            return res.success(cast(Scope, scope.result))
+        else:
+            expr = res.register(self.parse_expr())
+            if expr.error:
+                return res.failure(expr.error)
+
+            next_tok = self.peek()
+            if next_tok.type != TokenType.SEMI:
+                return res.failure(
+                    SyntaxError("Expected ';'.", next_tok.pos_start, next_tok.pos_end)
+                )
+
+            _ = self.consume(res)
+
+            return res.success(Statement(cast(StatementContent, expr.result)))
+
+    def parse_scope(self) -> ParseResult:
+        res = ParseResult()
+        lbrace = self.consume(res)
+
+        stmts: list[Statement] = []
+
+        while self.peek().type != TokenType.RBRACE:
+            stmt = res.register(self.parse_statement())
+            if stmt.error:
+                return res.failure(stmt.error)
+
+            stmts.append(cast(Statement, stmt.result))
+
+        rbrace = self.consume(res)
+
+        return res.success(
+            Scope(lbrace.pos_start, cast(Position, rbrace.pos_end), stmts)
+        )
 
     def parse_expr(self) -> ParseResult:
         res = ParseResult()
@@ -137,7 +187,7 @@ class Parser:
                 return res.failure(rhs.error)
 
             bin_op = BinOp(
-                cast(Node, lhs.result),
+                bin_op,
                 cast(Node, rhs.result),
                 self.tok_to_bin_operation(op),
             )
@@ -175,7 +225,7 @@ class Parser:
                 return res.failure(rhs.error)
 
             bin_op = BinOp(
-                cast(Node, lhs.result),
+                bin_op,
                 cast(Node, rhs.result),
                 self.tok_to_bin_operation(op),
             )
@@ -185,9 +235,42 @@ class Parser:
     def parse_atom(self) -> ParseResult:
         res = ParseResult()
 
-        if (next_tok := self.peek()).type not in (TokenType.INT, TokenType.FLOAT):
-            return res.failure(
-                SyntaxError("Expected Number", next_tok.pos_start, next_tok.pos_end)
-            )
+        next_tok = self.peek()
 
-        return res.success(NumberNode(self.consume(res)))
+        if next_tok.type == TokenType.LPAREN:
+            _ = self.consume(res)
+            expr = res.register(self.parse_expr())
+
+            if expr.error:
+                return res.failure(expr.error)
+
+            next_tok = self.consume(res)
+            if next_tok.type != TokenType.RPAREN:
+                return res.failure(
+                    SyntaxError("Expected ')'.", next_tok.pos_start, next_tok.pos_end)
+                )
+
+            return res.success(cast(Node, expr.result))
+        elif next_tok.type in (TokenType.PLUS, TokenType.MINUS):
+            op = self.consume(res)
+            operand = res.register(self.parse_atom())
+
+            if operand.error:
+                return res.failure(operand.error)
+
+            return res.success(
+                UnaryOp(
+                    op.pos_start,
+                    cast(Node, operand.result),
+                    self.tok_to_unary_operation(op),
+                )
+            )
+        elif next_tok.type in (TokenType.INT, TokenType.FLOAT):
+            _ = self.consume(res)
+            return res.success(NumberNode(next_tok))
+        else:
+            return res.failure(
+                SyntaxError(
+                    "Expected number or '('", next_tok.pos_start, next_tok.pos_end
+                )
+            )

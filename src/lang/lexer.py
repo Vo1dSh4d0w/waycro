@@ -134,7 +134,7 @@ class Lexer:
                 case ":":
                     toks.append(Token(TokenType.COLON, replace(self.pos)))
                     _ = self.consume()
-                case ":":
+                case ";":
                     toks.append(Token(TokenType.SEMI, replace(self.pos)))
                     _ = self.consume()
                 case "(":

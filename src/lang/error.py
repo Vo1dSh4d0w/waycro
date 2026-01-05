@@ -94,7 +94,7 @@ class PositionalError(Error):
 
     @override
     def __repr__(self) -> str:
-        return f"{self.name}: '{self.msg}' at {self.pos_start.fn}, line {self.pos_start.ln}, col {self.pos_start.col}\n{add_indent(generate_string_with_arrows(self.pos_start, self.pos_end))}"
+        return f"{self.name}: {self.msg} at {self.pos_start.fn}, line {self.pos_start.ln}, col {self.pos_start.col}\n{add_indent(generate_string_with_arrows(self.pos_start, self.pos_end))}"
 
 
 class InvalidCharError(PositionalError):
