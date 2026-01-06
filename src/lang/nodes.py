@@ -82,6 +82,18 @@ class MemberAccess(Node):
         return f"MemberAccess(lhs={self.lhs}, identifier={self.identifier})"
 
 
+class Call(Node):
+    def __init__(self, pos_end: Position, lhs: Node, args: list[Node]) -> None:
+        super().__init__(lhs.pos_start, pos_end)
+
+        self.lhs: Node = lhs
+        self.args: list[Node] = args
+
+    @override
+    def __repr__(self) -> str:
+        return f"Call(lhs={self.lhs}, args={self.args})"
+
+
 class UnaryOp(Node):
     def __init__(self, pos_start: Position, operand: Node, op: UnaryOperation) -> None:
         super().__init__(pos_start, operand.pos_end)

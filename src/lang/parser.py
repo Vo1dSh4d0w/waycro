@@ -4,6 +4,7 @@ from lang.error import Error, SyntaxError
 from lang.nodes import (
     BinOp,
     BinOperation,
+    Call,
     FloatLiteral,
     IntLiteral,
     MemberAccess,
@@ -243,24 +244,14 @@ class Parser:
         if lhs.error:
             return res.failure(lhs.error)
 
-        if self.peek().type != TokenType.DOT:
+        if self.peek().type not in (TokenType.DOT, TokenType.LPAREN):
             return res.success(cast(Node, lhs.result))
 
-        _ = self.consume(res)
+        op = self.consume(res)
 
-        next_tok = self.peek()
-        if next_tok.type != TokenType.IDENTIFIER:
-            return res.failure(
-                SyntaxError("expected identifier", next_tok.pos_start, next_tok.pos_end)
-            )
+        final_node: Node
 
-        identifier = self.consume(res)
-
-        member_access = MemberAccess(cast(Node, lhs.result), identifier)
-
-        while self.peek().type == TokenType.DOT:
-            _ = self.consume(res)
-
+        if op.type == TokenType.DOT:
             next_tok = self.peek()
             if next_tok.type != TokenType.IDENTIFIER:
                 return res.failure(
@@ -271,9 +262,77 @@ class Parser:
 
             identifier = self.consume(res)
 
-            member_access = MemberAccess(member_access, identifier)
+            final_node = MemberAccess(cast(Node, lhs.result), identifier)
+        else:
+            args: list[Node] = []
 
-        return res.success(member_access)
+            while self.peek().type != TokenType.RPAREN:
+                arg = res.register(self.parse_expr())
+
+                if arg.error:
+                    return res.failure(arg.error)
+
+                args.append(cast(Node, arg.result))
+
+                if self.peek().type != TokenType.COMMA:
+                    break
+                _ = self.consume(res)
+
+            next_tok = self.peek()
+            if next_tok.type != TokenType.RPAREN:
+                return res.failure(
+                    SyntaxError("expected ')'", next_tok.pos_start, next_tok.pos_end)
+                )
+
+            _ = self.consume(res)
+
+            final_node = Call(
+                cast(Position, next_tok.pos_end), cast(Node, lhs.result), args
+            )
+
+        while self.peek().type in (TokenType.DOT, TokenType.LPAREN):
+            op = self.consume(res)
+
+            if op.type == TokenType.DOT:
+                next_tok = self.peek()
+                if next_tok.type != TokenType.IDENTIFIER:
+                    return res.failure(
+                        SyntaxError(
+                            "expected identifier", next_tok.pos_start, next_tok.pos_end
+                        )
+                    )
+
+                identifier = self.consume(res)
+
+                final_node = MemberAccess(final_node, identifier)
+            else:
+                args = []
+
+                while self.peek().type != TokenType.RPAREN:
+                    arg = res.register(self.parse_expr())
+
+                    if arg.error:
+                        return res.failure(arg.error)
+
+                    args.append(cast(Node, arg.result))
+
+                    if self.peek().type != TokenType.COMMA:
+                        break
+                    _ = self.consume(res)
+
+                next_tok = self.peek()
+                if next_tok.type != TokenType.RPAREN:
+                    return res.failure(
+                        SyntaxError(
+                            "expected ')'", next_tok.pos_start, next_tok.pos_end
+                        )
+                    )
+
+                _ = self.consume(res)
+
+                final_node = Call(cast(Position, next_tok.pos_end), final_node, args)
+
+        return res.success(final_node)
 
     def parse_atom(self) -> ParseResult:
         res = ParseResult()

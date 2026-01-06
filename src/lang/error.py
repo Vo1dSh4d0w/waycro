@@ -22,7 +22,6 @@ def generate_string_with_arrows(pos_start: Position, pos_end: Position | None = 
 
     lines = list(pos_start.ftxt.split("\n")[pos_start.ln - 1 : pos_end.ln])
     txt = ""
-    print(lines)
 
     if pos_start.ln == pos_end.ln:
         txt += lines[0] + "\n"
