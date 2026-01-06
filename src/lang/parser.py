@@ -6,12 +6,14 @@ from lang.nodes import (
     BinOperation,
     FloatLiteral,
     IntLiteral,
+    MemberAccess,
     Node,
     Program,
     Scope,
     Statement,
     StatementContent,
     StringLiteral,
+    SymbolAccess,
     UnaryOp,
     UnaryOperation,
 )
@@ -199,7 +201,7 @@ class Parser:
     def parse_term(self) -> ParseResult:
         res = ParseResult()
 
-        lhs = res.register(self.parse_atom())
+        lhs = res.register(self.parse_member_access())
         if lhs.error:
             return res.failure(lhs.error)
 
@@ -211,7 +213,7 @@ class Parser:
 
         op = self.consume(res)
 
-        rhs = res.register(self.parse_atom())
+        rhs = res.register(self.parse_member_access())
         if rhs.error:
             return res.failure(rhs.error)
 
@@ -222,7 +224,7 @@ class Parser:
         )
         while self.peek().type in (TokenType.MUL, TokenType.DIV):
             op = self.consume(res)
-            rhs = res.register(self.parse_atom())
+            rhs = res.register(self.parse_member_access())
             if rhs.error:
                 return res.failure(rhs.error)
 
@@ -233,6 +235,45 @@ class Parser:
             )
 
         return res.success(bin_op)
+
+    def parse_member_access(self) -> ParseResult:
+        res = ParseResult()
+
+        lhs = res.register(self.parse_atom())
+        if lhs.error:
+            return res.failure(lhs.error)
+
+        if self.peek().type != TokenType.DOT:
+            return res.success(cast(Node, lhs.result))
+
+        _ = self.consume(res)
+
+        next_tok = self.peek()
+        if next_tok.type != TokenType.IDENTIFIER:
+            return res.failure(
+                SyntaxError("expected identifier", next_tok.pos_start, next_tok.pos_end)
+            )
+
+        identifier = self.consume(res)
+
+        member_access = MemberAccess(cast(Node, lhs.result), identifier)
+
+        while self.peek().type == TokenType.DOT:
+            _ = self.consume(res)
+
+            next_tok = self.peek()
+            if next_tok.type != TokenType.IDENTIFIER:
+                return res.failure(
+                    SyntaxError(
+                        "expected identifier", next_tok.pos_start, next_tok.pos_end
+                    )
+                )
+
+            identifier = self.consume(res)
+
+            member_access = MemberAccess(member_access, identifier)
+
+        return res.success(member_access)
 
     def parse_atom(self) -> ParseResult:
         res = ParseResult()
@@ -276,6 +317,9 @@ class Parser:
         elif next_tok.type == TokenType.STRING:
             _ = self.consume(res)
             return res.success(StringLiteral(next_tok))
+        elif next_tok.type == TokenType.IDENTIFIER:
+            _ = self.consume(res)
+            return res.success(SymbolAccess(next_tok))
         else:
             return res.failure(
                 SyntaxError(

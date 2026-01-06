@@ -10,7 +10,9 @@
 
 <term> ::= <factor> | <factor> ( "*" | "/" ) <factor>
 
-<factor> ::= <atom> | <atom> "**" <atom>
+<factor> ::= <member-access> | <member-access> "**" <member-access>
+
+<member-access> ::= <atom> ("." <identifier>)*
 
 <atom> ::= "(" <expr> ")" | <number-literal> | <string-literal> | <identifier>
 

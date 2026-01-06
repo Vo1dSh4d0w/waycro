@@ -56,7 +56,30 @@ class StringLiteral(Node):
 
     @override
     def __repr__(self) -> str:
-        return f"FloatLiteral(value={self.value})"
+        return f"StringLiteral(value={self.value})"
+
+
+class SymbolAccess(Node):
+    def __init__(self, identifier_tok: Token) -> None:
+        super().__init__(identifier_tok.pos_start, identifier_tok.pos_end)
+
+        self.identifier: str = cast(str, identifier_tok.value)
+
+    @override
+    def __repr__(self) -> str:
+        return f"SymbolAccess(identifer={self.identifier})"
+
+
+class MemberAccess(Node):
+    def __init__(self, lhs: Node, identifier_tok: Token) -> None:
+        super().__init__(lhs.pos_start, identifier_tok.pos_end)
+
+        self.lhs: Node = lhs
+        self.identifier: str = cast(str, identifier_tok.value)
+
+    @override
+    def __repr__(self) -> str:
+        return f"MemberAccess(lhs={self.lhs}, identifier={self.identifier})"
 
 
 class UnaryOp(Node):
