@@ -5,7 +5,7 @@ from typing import cast, override
 from lang.position import Position
 from lang.token import Token
 
-type StatementContent = BinOp | NumberNode | Scope
+type StatementContent = BinOp | IntLiteral | Scope
 
 
 class BinOperation(Enum):
@@ -26,15 +26,37 @@ class Node:
         self.pos_end: Position = pos_end or replace(pos_start)
 
 
-class NumberNode(Node):
+class IntLiteral(Node):
     def __init__(self, number_tok: Token) -> None:
         super().__init__(number_tok.pos_start, number_tok.pos_end)
 
-        self.value: int | float = cast(int | float, number_tok.value)
+        self.value: int = cast(int, number_tok.value)
 
     @override
     def __repr__(self) -> str:
-        return f"NumberNode(value={self.value})"
+        return f"IntLiteral(value={self.value})"
+
+
+class FloatLiteral(Node):
+    def __init__(self, number_tok: Token) -> None:
+        super().__init__(number_tok.pos_start, number_tok.pos_end)
+
+        self.value: float = cast(float, number_tok.value)
+
+    @override
+    def __repr__(self) -> str:
+        return f"FloatLiteral(value={self.value})"
+
+
+class StringLiteral(Node):
+    def __init__(self, string_tok: Token) -> None:
+        super().__init__(string_tok.pos_start, string_tok.pos_end)
+
+        self.value: str = cast(str, string_tok.value)
+
+    @override
+    def __repr__(self) -> str:
+        return f"FloatLiteral(value={self.value})"
 
 
 class UnaryOp(Node):

@@ -4,12 +4,14 @@ from lang.error import Error, SyntaxError
 from lang.nodes import (
     BinOp,
     BinOperation,
+    FloatLiteral,
+    IntLiteral,
     Node,
-    NumberNode,
     Program,
     Scope,
     Statement,
     StatementContent,
+    StringLiteral,
     UnaryOp,
     UnaryOperation,
 )
@@ -265,9 +267,15 @@ class Parser:
                     self.tok_to_unary_operation(op),
                 )
             )
-        elif next_tok.type in (TokenType.INT, TokenType.FLOAT):
+        elif next_tok.type == TokenType.INT:
             _ = self.consume(res)
-            return res.success(NumberNode(next_tok))
+            return res.success(IntLiteral(next_tok))
+        elif next_tok.type == TokenType.FLOAT:
+            _ = self.consume(res)
+            return res.success(FloatLiteral(next_tok))
+        elif next_tok.type == TokenType.STRING:
+            _ = self.consume(res)
+            return res.success(StringLiteral(next_tok))
         else:
             return res.failure(
                 SyntaxError(

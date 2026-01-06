@@ -1,7 +1,7 @@
 from dataclasses import replace
 from string import ascii_letters, digits
 
-from lang.error import Error, InvalidCharError
+from lang.error import Error, InvalidCharError, SyntaxError
 from lang.position import Position
 from lang.token import Token, TokenType
 
@@ -103,6 +103,12 @@ class Lexer:
                     toks.append(tok)
                 case v if v in ALLOWED_CHARS_FIRST:
                     toks.append(self.make_identifier())
+                case '"' | "'":
+                    tok, err = self.make_string()
+                    if err or tok is None:
+                        return None, err
+                    toks.append(tok)
+                    pass
                 case "+":
                     toks.append(Token(TokenType.PLUS, replace(self.pos)))
                     _ = self.consume()
@@ -212,3 +218,45 @@ class Lexer:
             return Token(TokenType.KEYWORD, pos_start, pos_end, val)
         else:
             return Token(TokenType.IDENTIFIER, pos_start, pos_end, val)
+
+    def make_string(self) -> tuple[Token | None, Error | None]:
+        quote: str = self.consume()
+        char: str | None
+        val: str = ""
+        pos_start = replace(self.pos)
+
+        while (char := self.peek()) is not None and char != quote:
+            pos_end = replace(self.pos)
+            if char == "\\":
+                _ = self.consume()
+                escaped_char = self.peek()
+
+                match escaped_char:
+                    case None:
+                        return None, SyntaxError(
+                            "unterminated string literal", pos_start, replace(self.pos)
+                        )
+                    case "n":
+                        val += "\n"
+                    case "t":
+                        val += "\t"
+                    case "r":
+                        val += "\r"
+                    case "b":
+                        val += "\b"
+                    case other:
+                        val += other
+
+                _ = self.consume()
+            else:
+                val += self.consume()
+
+        if char is None:
+            return None, SyntaxError(
+                "unterminated string literal", pos_start, replace(self.pos)
+            )
+
+        pos_end = replace(self.pos)
+        _ = self.consume()
+
+        return Token(TokenType.STRING, pos_start, pos_end, val), None

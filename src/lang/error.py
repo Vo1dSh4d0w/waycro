@@ -22,10 +22,21 @@ def generate_string_with_arrows(pos_start: Position, pos_end: Position | None = 
 
     lines = list(pos_start.ftxt.split("\n")[pos_start.ln - 1 : pos_end.ln])
     txt = ""
+    print(lines)
 
     if pos_start.ln == pos_end.ln:
         txt += lines[0] + "\n"
         txt += " " * (pos_start.col - 1) + "^" * (pos_end.col - pos_start.col + 1)
+    else:
+        txt += lines[0] + "\n"
+        txt += (
+            " " * (pos_start.col - 1) + "^" * (len(lines[0]) - pos_start.col + 1) + "\n"
+        )
+        for line in lines[1:-1]:
+            txt += line + "\n"
+            txt += "^" * (len(line)) + "\n"
+        txt += lines[-1] + "\n"
+        txt += "^" * pos_end.col
 
     return txt
 
