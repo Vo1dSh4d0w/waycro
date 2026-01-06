@@ -135,7 +135,7 @@ class Parser:
             next_tok = self.peek()
             if next_tok.type != TokenType.SEMI:
                 return res.failure(
-                    SyntaxError("Expected ';'.", next_tok.pos_start, next_tok.pos_end)
+                    SyntaxError("expected ';'", next_tok.pos_start, next_tok.pos_end)
                 )
 
             _ = self.consume(res)
@@ -349,7 +349,7 @@ class Parser:
             next_tok = self.consume(res)
             if next_tok.type != TokenType.RPAREN:
                 return res.failure(
-                    SyntaxError("Expected ')'.", next_tok.pos_start, next_tok.pos_end)
+                    SyntaxError("expected ')'", next_tok.pos_start, next_tok.pos_end)
                 )
 
             return res.success(cast(Node, expr.result))
@@ -382,6 +382,8 @@ class Parser:
         else:
             return res.failure(
                 SyntaxError(
-                    "Expected number or '('", next_tok.pos_start, next_tok.pos_end
+                    "expected number, string, identifier or '('",
+                    next_tok.pos_start,
+                    next_tok.pos_end,
                 )
             )
