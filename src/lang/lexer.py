@@ -220,10 +220,10 @@ class Lexer:
             return Token(TokenType.IDENTIFIER, pos_start, pos_end, val)
 
     def make_string(self) -> tuple[Token | None, Error | None]:
+        pos_start = replace(self.pos)
         quote: str = self.consume()
         char: str | None
         val: str = ""
-        pos_start = replace(self.pos)
 
         while (char := self.peek()) is not None and char != quote:
             pos_end = replace(self.pos)
