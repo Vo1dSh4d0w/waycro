@@ -2,6 +2,7 @@ from typing import Self, cast
 
 from lang.error import Error, SyntaxError
 from lang.nodes import (
+    Assignment,
     Attribute,
     BinOp,
     BinOperation,
@@ -42,6 +43,9 @@ class ParseResult:
             self.consume_count += result.consume_count
             return result, 0
         return result, result.consume_count
+
+    def reverse(self, parser: "Parser"):
+        parser.reverse(self.consume_count)
 
     def success(self, result: Node) -> Self:
         self.result = result
@@ -142,6 +146,11 @@ class Parser:
             if scope.error:
                 return res.failure(scope.error)
             return res.success(cast(Scope, scope.result))
+        elif self.is_assignment():
+            assignment = res.register(self.parse_assignment())
+            if assignment.error:
+                return res.failure(assignment.error)
+            return res.success(Statement(cast(StatementContent, assignment.result)))
         elif next_tok.type == TokenType.KEYWORD and next_tok.value in (
             "local",
             "global",
@@ -237,6 +246,97 @@ class Parser:
                 self.tok_to_symbol_declaration_scope(scope),
                 identifier_tok,
                 cast(Node, initial_value.result),
+            )
+        )
+
+    def is_assignment(self) -> bool:
+        lhs = self.parse_postfix()
+        if lhs.error:
+            lhs.reverse(self)
+            return False
+        assign = self.peek()
+        lhs.reverse(self)
+        if assign.type != TokenType.ASSIGN:
+            return False
+        return True
+
+    def parse_assignment(self) -> ParseResult:
+        res = ParseResult()
+        lhs = res.register(self.parse_postfix())
+        if lhs.error:
+            return res.failure(lhs.error)
+        elif isinstance(lhs.result, IntLiteral):
+            return res.failure(
+                SyntaxError(
+                    "cannot assign to int literal",
+                    lhs.result.pos_start,
+                    lhs.result.pos_end,
+                )
+            )
+        elif isinstance(lhs.result, FloatLiteral):
+            return res.failure(
+                SyntaxError(
+                    "cannot assign to float literal",
+                    lhs.result.pos_start,
+                    lhs.result.pos_end,
+                )
+            )
+        elif isinstance(lhs.result, StringLiteral):
+            return res.failure(
+                SyntaxError(
+                    "cannot assign to string literal",
+                    lhs.result.pos_start,
+                    lhs.result.pos_end,
+                )
+            )
+        elif isinstance(lhs.result, BinOp):
+            return res.failure(
+                SyntaxError(
+                    "cannot assign to binary operation",
+                    lhs.result.pos_start,
+                    lhs.result.pos_end,
+                )
+            )
+        elif isinstance(lhs.result, UnaryOp):
+            return res.failure(
+                SyntaxError(
+                    "cannot assign to unary operation",
+                    lhs.result.pos_start,
+                    lhs.result.pos_end,
+                )
+            )
+        elif isinstance(lhs.result, Call):
+            return res.failure(
+                SyntaxError(
+                    "cannot assign to call", lhs.result.pos_start, lhs.result.pos_end
+                )
+            )
+
+        assign = self.peek()
+        if assign.type != TokenType.ASSIGN:
+            return res.failure(
+                SyntaxError("expected '='", assign.pos_start, assign.pos_end)
+            )
+        _ = self.consume(res)
+
+        rhs = res.register(self.parse_expr())
+        if rhs.error:
+            return res.failure(rhs.error)
+
+        semi = self.peek()
+        if semi.type != TokenType.SEMI:
+            return res.failure(
+                SyntaxError(
+                    "expected ';'", semi.pos_start, cast(Position, semi.pos_end)
+                )
+            )
+        _ = self.consume(res)
+
+        return res.success(
+            Assignment(
+                cast(Position, semi.pos_end),
+                cast(Node, lhs.result),
+                cast(Node, rhs.result),
             )
         )
 

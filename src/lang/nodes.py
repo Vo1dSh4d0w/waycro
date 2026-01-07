@@ -5,7 +5,9 @@ from typing import cast, override
 from lang.position import Position
 from lang.token import Token
 
-type StatementContent = UnaryOp | BinOp | IntLiteral | Scope | SymbolDeclaration
+type StatementContent = (
+    UnaryOp | BinOp | IntLiteral | Scope | SymbolDeclaration | Assignment
+)
 
 
 class BinOperation(Enum):
@@ -94,6 +96,18 @@ class SymbolDeclaration(Node):
     @override
     def __repr__(self) -> str:
         return f"SymbolDeclaration(scope={self.scope}, identifier={self.identifier}, initial_value={self.initial_value})"
+
+
+class Assignment(Node):
+    def __init__(self, pos_end: Position, lhs: Node, rhs: Node) -> None:
+        super().__init__(lhs.pos_start, pos_end)
+
+        self.lhs: Node = lhs
+        self.rhs: Node = rhs
+
+    @override
+    def __repr__(self) -> str:
+        return f"Assignment(lhs={self.lhs}, rhs={self.rhs})"
 
 
 class Attribute(Node):
