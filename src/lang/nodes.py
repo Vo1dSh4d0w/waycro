@@ -1,23 +1,29 @@
 from dataclasses import replace
-from enum import Enum
+from enum import Enum, auto
 from typing import cast, override
 
 from lang.position import Position
 from lang.token import Token
 
-type StatementContent = BinOp | IntLiteral | Scope
+type StatementContent = UnaryOp | BinOp | IntLiteral | Scope | SymbolDeclaration
 
 
 class BinOperation(Enum):
-    ADD = 0
-    SUB = 1
-    MUL = 2
-    DIV = 3
+    ADD = auto()
+    SUB = auto()
+    MUL = auto()
+    DIV = auto()
 
 
 class UnaryOperation(Enum):
-    PLUS = 0
-    MINUS = 1
+    PLUS = auto()
+    MINUS = auto()
+
+
+class SymbolDeclarationScope(Enum):
+    LOCAL = auto()
+    GLOBAL = auto()
+    EXPORT = auto()
 
 
 class Node:
@@ -70,7 +76,27 @@ class SymbolAccess(Node):
         return f"SymbolAccess(identifer={self.identifier})"
 
 
-class MemberAccess(Node):
+class SymbolDeclaration(Node):
+    def __init__(
+        self,
+        pos_start: Position,
+        pos_end: Position,
+        scope: SymbolDeclarationScope,
+        identifier_tok: Token,
+        initial_value: Node,
+    ) -> None:
+        super().__init__(pos_start, pos_end)
+
+        self.scope: SymbolDeclarationScope = scope
+        self.identifier: str = cast(str, identifier_tok.value)
+        self.initial_value: Node = initial_value
+
+    @override
+    def __repr__(self) -> str:
+        return f"SymbolDeclaration(scope={self.scope}, identifier={self.identifier}, initial_value={self.initial_value})"
+
+
+class Attribute(Node):
     def __init__(self, lhs: Node, identifier_tok: Token) -> None:
         super().__init__(lhs.pos_start, identifier_tok.pos_end)
 
@@ -79,7 +105,7 @@ class MemberAccess(Node):
 
     @override
     def __repr__(self) -> str:
-        return f"MemberAccess(lhs={self.lhs}, identifier={self.identifier})"
+        return f"Attribute(lhs={self.lhs}, identifier={self.identifier})"
 
 
 class Call(Node):

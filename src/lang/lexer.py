@@ -22,6 +22,9 @@ KEYWORDS: set[str] = {
     "return",
     "exit",
     "using",
+    "local",
+    "global",
+    "export",
 }
 
 
@@ -109,6 +112,9 @@ class Lexer:
                         return None, err
                     toks.append(tok)
                     pass
+                case "=":
+                    toks.append(Token(TokenType.ASSIGN, replace(self.pos)))
+                    _ = self.consume()
                 case "+":
                     toks.append(Token(TokenType.PLUS, replace(self.pos)))
                     _ = self.consume()

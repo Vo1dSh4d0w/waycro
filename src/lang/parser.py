@@ -2,12 +2,12 @@ from typing import Self, cast
 
 from lang.error import Error, SyntaxError
 from lang.nodes import (
+    Attribute,
     BinOp,
     BinOperation,
     Call,
     FloatLiteral,
     IntLiteral,
-    MemberAccess,
     Node,
     Program,
     Scope,
@@ -15,6 +15,8 @@ from lang.nodes import (
     StatementContent,
     StringLiteral,
     SymbolAccess,
+    SymbolDeclaration,
+    SymbolDeclarationScope,
     UnaryOp,
     UnaryOperation,
 )
@@ -100,6 +102,19 @@ class Parser:
                     f"Cannot convert token ({tok.type}) to unary operation."
                 )
 
+    def tok_to_symbol_declaration_scope(self, tok: Token) -> SymbolDeclarationScope:
+        match tok.value:
+            case "local":
+                return SymbolDeclarationScope.LOCAL
+            case "global":
+                return SymbolDeclarationScope.GLOBAL
+            case "export":
+                return SymbolDeclarationScope.EXPORT
+            case _:
+                raise Exception(
+                    f"Cannot convert token ({tok.value}) to symbol declaration scope."
+                )
+
     def parse(self) -> ParseResult:
         return self.parse_program()
 
@@ -127,6 +142,17 @@ class Parser:
             if scope.error:
                 return res.failure(scope.error)
             return res.success(cast(Scope, scope.result))
+        elif next_tok.type == TokenType.KEYWORD and next_tok.value in (
+            "local",
+            "global",
+            "export",
+        ):
+            symbol_declaration = res.register(self.parse_symbol_declaration())
+            if symbol_declaration.error:
+                return res.failure(symbol_declaration.error)
+            return res.success(
+                Statement(cast(StatementContent, symbol_declaration.result))
+            )
         else:
             expr = res.register(self.parse_expr())
             if expr.error:
@@ -159,6 +185,59 @@ class Parser:
 
         return res.success(
             Scope(lbrace.pos_start, cast(Position, rbrace.pos_end), stmts)
+        )
+
+    def parse_symbol_declaration(self) -> ParseResult:
+        res = ParseResult()
+
+        scope = self.consume(res)
+
+        identifier_tok = self.peek()
+        if identifier_tok.type != TokenType.IDENTIFIER:
+            return res.failure(
+                SyntaxError(
+                    "expected identifier",
+                    identifier_tok.pos_start,
+                    cast(Position, identifier_tok.pos_end),
+                )
+            )
+
+        _ = self.consume(res)
+
+        assign_tok = self.peek()
+        if assign_tok.type != TokenType.ASSIGN:
+            return res.failure(
+                SyntaxError(
+                    "expected '='",
+                    assign_tok.pos_start,
+                    cast(Position, assign_tok.pos_end),
+                )
+            )
+
+        _ = self.consume(res)
+
+        initial_value = res.register(self.parse_expr())
+        if initial_value.error:
+            return res.failure(initial_value.error)
+
+        semi = self.peek()
+        if semi.type != TokenType.SEMI:
+            return res.failure(
+                SyntaxError(
+                    "expected ';'", semi.pos_start, cast(Position, semi.pos_end)
+                )
+            )
+
+        _ = self.consume(res)
+
+        return res.success(
+            SymbolDeclaration(
+                scope.pos_start,
+                cast(Position, semi.pos_end),
+                self.tok_to_symbol_declaration_scope(scope),
+                identifier_tok,
+                cast(Node, initial_value.result),
+            )
         )
 
     def parse_expr(self) -> ParseResult:
@@ -202,7 +281,7 @@ class Parser:
     def parse_term(self) -> ParseResult:
         res = ParseResult()
 
-        lhs = res.register(self.parse_member_access())
+        lhs = res.register(self.parse_postfix())
         if lhs.error:
             return res.failure(lhs.error)
 
@@ -214,7 +293,7 @@ class Parser:
 
         op = self.consume(res)
 
-        rhs = res.register(self.parse_member_access())
+        rhs = res.register(self.parse_postfix())
         if rhs.error:
             return res.failure(rhs.error)
 
@@ -225,7 +304,7 @@ class Parser:
         )
         while self.peek().type in (TokenType.MUL, TokenType.DIV):
             op = self.consume(res)
-            rhs = res.register(self.parse_member_access())
+            rhs = res.register(self.parse_postfix())
             if rhs.error:
                 return res.failure(rhs.error)
 
@@ -237,7 +316,7 @@ class Parser:
 
         return res.success(bin_op)
 
-    def parse_member_access(self) -> ParseResult:
+    def parse_postfix(self) -> ParseResult:
         res = ParseResult()
 
         lhs = res.register(self.parse_atom())
@@ -262,7 +341,7 @@ class Parser:
 
             identifier = self.consume(res)
 
-            final_node = MemberAccess(cast(Node, lhs.result), identifier)
+            final_node = Attribute(cast(Node, lhs.result), identifier)
         else:
             args: list[Node] = []
 
@@ -304,7 +383,7 @@ class Parser:
 
                 identifier = self.consume(res)
 
-                final_node = MemberAccess(final_node, identifier)
+                final_node = Attribute(final_node, identifier)
             else:
                 args = []
 
