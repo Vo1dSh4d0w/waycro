@@ -1,5 +1,5 @@
 from dataclasses import replace
-from enum import Enum, auto
+from enum import Enum, Flag, auto
 from typing import cast, override
 
 from lang.position import Position
@@ -33,6 +33,10 @@ class SymbolDeclarationScope(Enum):
     LOCAL = auto()
     GLOBAL = auto()
     EXPORT = auto()
+
+
+class SymbolDeclarationFlags(Flag):
+    CONST = auto()
 
 
 class Node:
@@ -93,16 +97,18 @@ class SymbolDeclaration(Node):
         scope: SymbolDeclarationScope,
         identifier_tok: Token,
         initial_value: Node,
+        flags: SymbolDeclarationFlags | None = None,
     ) -> None:
         super().__init__(pos_start, pos_end)
 
         self.scope: SymbolDeclarationScope = scope
         self.identifier: str = cast(str, identifier_tok.value)
         self.initial_value: Node = initial_value
+        self.flags: SymbolDeclarationFlags = flags or SymbolDeclarationFlags(0)
 
     @override
     def __repr__(self) -> str:
-        return f"SymbolDeclaration(scope={self.scope}, identifier={self.identifier}, initial_value={self.initial_value})"
+        return f"SymbolDeclaration(scope={self.scope}, identifier={self.identifier}, initial_value={self.initial_value}, flags={self.flags})"
 
 
 class Assignment(Node):

@@ -18,6 +18,7 @@ from lang.nodes import (
     StringLiteral,
     SymbolAccess,
     SymbolDeclaration,
+    SymbolDeclarationFlags,
     SymbolDeclarationScope,
     UnaryOp,
     UnaryOperation,
@@ -132,6 +133,15 @@ class Parser:
                     f"Cannot convert token ({tok.value}) to symbol declaration scope."
                 )
 
+    def tok_to_symbol_declaration_flags(self, tok: Token) -> SymbolDeclarationFlags:
+        match tok.value:
+            case "const":
+                return SymbolDeclarationFlags.CONST
+            case _:
+                raise Exception(
+                    f"Cannot convert token ({tok.value}) to symbol declaration flags."
+                )
+
     def parse(self) -> ParseResult:
         return self.parse_program()
 
@@ -219,6 +229,20 @@ class Parser:
 
         scope = self.consume(res)
 
+        flags = SymbolDeclarationFlags(0)
+        while (flag := self.peek()).type == TokenType.KEYWORD and flag.value in (
+            "const",
+        ):
+            _ = self.consume()
+            flag_obj = self.tok_to_symbol_declaration_flags(flag)
+            if flag_obj in flags:
+                return res.failure(
+                    SyntaxError(
+                        f"{flag.value} defined twice", flag.pos_start, flag.pos_end
+                    )
+                )
+            flags |= flag_obj
+
         identifier_tok = self.peek()
         if identifier_tok.type != TokenType.IDENTIFIER:
             return res.failure(
@@ -264,6 +288,7 @@ class Parser:
                 self.tok_to_symbol_declaration_scope(scope),
                 identifier_tok,
                 cast(Node, initial_value.result),
+                flags,
             )
         )
 

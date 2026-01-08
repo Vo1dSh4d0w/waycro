@@ -26,6 +26,7 @@ KEYWORDS: set[str] = {
     "local",
     "global",
     "export",
+    "const",
 }
 
 

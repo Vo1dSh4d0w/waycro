@@ -11,7 +11,8 @@ scope               ::= "{" { statement } "}" ;
 
 expr_statement      ::= expr ";" ;
 
-symbol_declaration  ::= decl_scope IDENT "=" expr ";" ;
+symbol_declaration  ::= decl_scope [ decl_modifier ] IDENT "=" expr ";" ;
+decl_modifier       ::= "const"
 decl_scope          ::= "local" | "global" | "export" ;
 
 assignment          ::= lvalue "=" expr ";" ;
