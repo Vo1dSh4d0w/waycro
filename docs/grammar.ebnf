@@ -29,13 +29,15 @@ call_then_member    ::= call member_access { member_access } ;
 if_statement        ::= "if" expr statement [ "else" statement ] ;
 
 (* Expressions: precedence (lowest -> highest)
-   1) ==, !=, <, <=, >=, >
-   2) +, -
-   3) *, /
-   4) postfix
-   5) atom / unary
+   1) ||, &&
+   2) ==, !=, <, <=, >=, >
+   3) +, -
+   4) *, /
+   5) postfix
+   6) atom / unary
 *)
-expr                ::= arith_expr { ( "==" | "!=" | "<" | "<=" | ">=" | ">" ) arith_expr } ;
+expr                ::= comp_expr { ( "||" | "&&" ) comp_expr } ;
+comp_expr           ::= arith_expr { ( "==" | "!=" | "<" | "<=" | ">=" | ">" ) arith_expr } ;
 arith_expr          ::= term { ( "+" | "-" ) term } ;
 term                ::= postfix { ( "*" | "/" ) postfix } ;
 

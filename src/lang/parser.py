@@ -104,6 +104,10 @@ class Parser:
                 return BinOperation.GT
             case TokenType.GE:
                 return BinOperation.GE
+            case TokenType.OR:
+                return BinOperation.OR
+            case TokenType.AND:
+                return BinOperation.AND
             case _:
                 raise Exception(
                     f"Cannot convert token ({tok.type}) to binary operation."
@@ -421,6 +425,47 @@ class Parser:
         )
 
     def parse_expr(self) -> ParseResult:
+        res = ParseResult()
+
+        lhs = res.register(self.parse_comp_expr())
+        if lhs.error:
+            return res.failure(lhs.error)
+
+        if self.peek().type not in (
+            TokenType.OR,
+            TokenType.AND,
+        ):
+            return res.success(cast(Node, lhs.result))
+
+        op = self.consume(res)
+
+        rhs = res.register(self.parse_comp_expr())
+        if rhs.error:
+            return res.failure(rhs.error)
+
+        bin_op = BinOp(
+            cast(Node, lhs.result),
+            cast(Node, rhs.result),
+            self.tok_to_bin_operation(op),
+        )
+        while self.peek().type in (
+            TokenType.OR,
+            TokenType.AND,
+        ):
+            op = self.consume(res)
+            rhs = res.register(self.parse_comp_expr())
+            if rhs.error:
+                return res.failure(rhs.error)
+
+            bin_op = BinOp(
+                bin_op,
+                cast(Node, rhs.result),
+                self.tok_to_bin_operation(op),
+            )
+
+        return res.success(bin_op)
+
+    def parse_comp_expr(self) -> ParseResult:
         res = ParseResult()
 
         lhs = res.register(self.parse_arith_expr())

@@ -132,6 +132,26 @@ class Lexer:
                         return None, InvalidCharError(
                             cast(str, self.peek()), replace(self.pos)
                         )
+                case "|":
+                    pos_start = replace(self.pos)
+                    _ = self.consume()
+                    if self.peek() == "|":
+                        toks.append(Token(TokenType.OR, pos_start, replace(self.pos)))
+                        _ = self.consume()
+                    else:
+                        return None, InvalidCharError(
+                            cast(str, self.peek()), replace(self.pos)
+                        )
+                case "&":
+                    pos_start = replace(self.pos)
+                    _ = self.consume()
+                    if self.peek() == "&":
+                        toks.append(Token(TokenType.AND, pos_start, replace(self.pos)))
+                        _ = self.consume()
+                    else:
+                        return None, InvalidCharError(
+                            cast(str, self.peek()), replace(self.pos)
+                        )
                 case "+":
                     toks.append(Token(TokenType.PLUS, replace(self.pos)))
                     _ = self.consume()

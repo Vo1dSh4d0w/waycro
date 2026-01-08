@@ -23,6 +23,9 @@ class BinOperation(Enum):
     GE = auto()
     GT = auto()
 
+    OR = auto()
+    AND = auto()
+
 
 class UnaryOperation(Enum):
     PLUS = auto()
