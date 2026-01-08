@@ -16,6 +16,13 @@ class BinOperation(Enum):
     MUL = auto()
     DIV = auto()
 
+    EQ = auto()
+    NEQ = auto()
+    LT = auto()
+    LE = auto()
+    GE = auto()
+    GT = auto()
+
 
 class UnaryOperation(Enum):
     PLUS = auto()
@@ -108,6 +115,25 @@ class Assignment(Node):
     @override
     def __repr__(self) -> str:
         return f"Assignment(lhs={self.lhs}, rhs={self.rhs})"
+
+
+class IfStatement(Node):
+    def __init__(
+        self,
+        pos_start: Position,
+        condition: Node,
+        body: Node,
+        else_node: Node | None = None,
+    ) -> None:
+        super().__init__(pos_start, else_node.pos_end if else_node else body.pos_end)
+
+        self.condition: Node = condition
+        self.body: Node = body
+        self.else_node: Node | None = else_node
+
+    @override
+    def __repr__(self) -> str:
+        return f"IfStatement(condition={self.condition}, body={self.body}, else_node={self.else_node})"
 
 
 class Attribute(Node):

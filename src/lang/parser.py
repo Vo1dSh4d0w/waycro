@@ -8,6 +8,7 @@ from lang.nodes import (
     BinOperation,
     Call,
     FloatLiteral,
+    IfStatement,
     IntLiteral,
     Node,
     Program,
@@ -90,6 +91,18 @@ class Parser:
                 return BinOperation.MUL
             case TokenType.DIV:
                 return BinOperation.DIV
+            case TokenType.EQ:
+                return BinOperation.EQ
+            case TokenType.NEQ:
+                return BinOperation.NEQ
+            case TokenType.LT:
+                return BinOperation.LT
+            case TokenType.LE:
+                return BinOperation.LE
+            case TokenType.GT:
+                return BinOperation.GT
+            case TokenType.GE:
+                return BinOperation.GE
             case _:
                 raise Exception(
                     f"Cannot convert token ({tok.type}) to binary operation."
@@ -151,6 +164,11 @@ class Parser:
             if assignment.error:
                 return res.failure(assignment.error)
             return res.success(Statement(cast(StatementContent, assignment.result)))
+        elif next_tok.matches(TokenType.KEYWORD, "if"):
+            if_statement = res.register(self.parse_if_statement())
+            if if_statement.error:
+                return res.failure(if_statement.error)
+            return res.success(Statement(cast(StatementContent, if_statement.result)))
         elif next_tok.type == TokenType.KEYWORD and next_tok.value in (
             "local",
             "global",
@@ -340,7 +358,93 @@ class Parser:
             )
         )
 
+    def parse_if_statement(self) -> ParseResult:
+        res = ParseResult()
+        keyword = self.consume(res)
+
+        condition = res.register(self.parse_expr())
+        if condition.error:
+            return res.failure(condition.error)
+
+        body = res.register(self.parse_statement())
+        if body.error:
+            return res.failure(body.error)
+
+        else_keyword = self.peek()
+        if not else_keyword.matches(TokenType.KEYWORD, "else"):
+            return res.success(
+                IfStatement(
+                    keyword.pos_start,
+                    cast(Node, condition.result),
+                    cast(Node, body.result),
+                )
+            )
+
+        _ = self.consume(res)
+
+        else_statement = res.register(self.parse_statement())
+        if else_statement.error:
+            return res.failure(else_statement.error)
+
+        return res.success(
+            IfStatement(
+                keyword.pos_start,
+                cast(Node, condition.result),
+                cast(Node, body.result),
+                cast(Node, else_statement.result),
+            )
+        )
+
     def parse_expr(self) -> ParseResult:
+        res = ParseResult()
+
+        lhs = res.register(self.parse_arith_expr())
+        if lhs.error:
+            return res.failure(lhs.error)
+
+        if self.peek().type not in (
+            TokenType.EQ,
+            TokenType.NEQ,
+            TokenType.LT,
+            TokenType.LE,
+            TokenType.GE,
+            TokenType.GT,
+        ):
+            return res.success(cast(Node, lhs.result))
+
+        op = self.consume(res)
+
+        rhs = res.register(self.parse_arith_expr())
+        if rhs.error:
+            return res.failure(rhs.error)
+
+        bin_op = BinOp(
+            cast(Node, lhs.result),
+            cast(Node, rhs.result),
+            self.tok_to_bin_operation(op),
+        )
+        while self.peek().type in (
+            TokenType.EQ,
+            TokenType.NEQ,
+            TokenType.LT,
+            TokenType.LE,
+            TokenType.GE,
+            TokenType.GT,
+        ):
+            op = self.consume(res)
+            rhs = res.register(self.parse_arith_expr())
+            if rhs.error:
+                return res.failure(rhs.error)
+
+            bin_op = BinOp(
+                bin_op,
+                cast(Node, rhs.result),
+                self.tok_to_bin_operation(op),
+            )
+
+        return res.success(bin_op)
+
+    def parse_arith_expr(self) -> ParseResult:
         res = ParseResult()
 
         lhs = res.register(self.parse_term())

@@ -1,5 +1,6 @@
 from dataclasses import replace
 from string import ascii_letters, digits
+from typing import cast
 
 from lang.error import Error, InvalidCharError, SyntaxError
 from lang.position import Position
@@ -113,8 +114,23 @@ class Lexer:
                     toks.append(tok)
                     pass
                 case "=":
-                    toks.append(Token(TokenType.ASSIGN, replace(self.pos)))
+                    pos_start = replace(self.pos)
                     _ = self.consume()
+                    if self.peek() == "=":
+                        toks.append(Token(TokenType.EQ, pos_start, replace(self.pos)))
+                        _ = self.consume()
+                    else:
+                        toks.append(Token(TokenType.ASSIGN, pos_start))
+                case "!":
+                    pos_start = replace(self.pos)
+                    _ = self.consume()
+                    if self.peek() == "=":
+                        toks.append(Token(TokenType.NEQ, pos_start, replace(self.pos)))
+                        _ = self.consume()
+                    else:
+                        return None, InvalidCharError(
+                            cast(str, self.peek()), replace(self.pos)
+                        )
                 case "+":
                     toks.append(Token(TokenType.PLUS, replace(self.pos)))
                     _ = self.consume()
