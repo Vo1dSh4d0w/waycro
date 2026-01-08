@@ -1,0 +1,57 @@
+program             ::= { statement } EOF ;
+
+statement           ::= scope
+                      | if_statement
+                      | symbol_declaration
+                      | assignment
+                      | expr_statement
+                      ;
+
+scope               ::= "{" { statement } "}" ;
+
+expr_statement      ::= expr ";" ;
+
+symbol_declaration  ::= decl_scope IDENT "=" expr ";" ;
+decl_scope          ::= "local" | "global" | "export" ;
+
+assignment          ::= lvalue "=" expr ";" ;
+
+lvalue              ::= lvalue_start { lvalue_step } ;
+lvalue_start        ::= IDENT | "(" expr ")" ;
+
+lvalue_step         ::= member_access
+                      | call_then_member
+                      ;
+
+call_then_member    ::= call member_access { member_access } ;
+
+if_statement        ::= "if" expr statement [ "else" statement ] ;
+
+(* Expressions: precedence (lowest -> highest)
+   1) ==, !=, <, <=, >=, >
+   2) +, -
+   3) *, /
+   4) postfix
+   5) atom / unary
+*)
+expr                ::= arith_expr { ( "==" | "!=" | "<" | "<=" | ">=" | ">" ) arith_expr } ;
+arith_expr          ::= term { ( "+" | "-" ) term } ;
+term                ::= postfix { ( "*" | "/" ) postfix } ;
+
+postfix             ::= atom { postfix_op } ;
+postfix_op          ::= member_access | call ;
+
+member_access       ::= "." IDENT ;
+
+call                ::= "(" [ arg_list ] ")" ;
+arg_list            ::= expr { "," expr } ;
+
+atom                ::= "(" expr ")"
+                      | unary
+                      | INT
+                      | FLOAT
+                      | STRING
+                      | IDENT
+                      ;
+
+unary               ::= ( "+" | "-" ) atom ;
