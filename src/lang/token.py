@@ -11,9 +11,10 @@ class TokenType(Enum):
 
     INT = auto()
     FLOAT = auto()
+    STRING = auto()
+    BOOL = auto()
     IDENTIFIER = auto()
     KEYWORD = auto()
-    STRING = auto()
 
     ASSIGN = auto()
     PLUS = auto()
@@ -57,7 +58,7 @@ class Token:
     type: TokenType
     pos_start: Position
     pos_end: Position | None = None
-    value: str | int | float | None = None
+    value: str | int | float | bool | None = None
 
     def matches(self, type: TokenType, value: str | int | float):
         return type == self.type and value == self.value

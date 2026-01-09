@@ -29,6 +29,8 @@ KEYWORDS: set[str] = {
     "const",
 }
 
+BOOL_LITERALS: set[str] = {"true", "false"}
+
 
 class Lexer:
     """Class for converting a text to the corresponding tokens."""
@@ -257,6 +259,8 @@ class Lexer:
 
         if val in KEYWORDS:
             return Token(TokenType.KEYWORD, pos_start, pos_end, val)
+        elif val in BOOL_LITERALS:
+            return Token(TokenType.BOOL, pos_start, pos_end, val)
         else:
             return Token(TokenType.IDENTIFIER, pos_start, pos_end, val)
 

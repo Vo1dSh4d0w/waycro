@@ -60,6 +60,7 @@ atom                ::= "(" expr ")"
                       | INT
                       | FLOAT
                       | STRING
+                      | BOOL
                       | IDENT
                       ;
 

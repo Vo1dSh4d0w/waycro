@@ -6,6 +6,7 @@ from lang.nodes import (
     Attribute,
     BinOp,
     BinOperation,
+    BoolLiteral,
     Call,
     FloatLiteral,
     IfStatement,
@@ -783,13 +784,16 @@ class Parser:
         elif next_tok.type == TokenType.STRING:
             _ = self.consume(res)
             return res.success(StringLiteral(next_tok))
+        elif next_tok.type == TokenType.BOOL:
+            _ = self.consume(res)
+            return res.success(BoolLiteral(next_tok))
         elif next_tok.type == TokenType.IDENTIFIER:
             _ = self.consume(res)
             return res.success(SymbolAccess(next_tok))
         else:
             return res.failure(
                 SyntaxError(
-                    "expected number, string, identifier or '('",
+                    "expected number, string, bool, identifier or '('",
                     next_tok.pos_start,
                     next_tok.pos_end,
                 )

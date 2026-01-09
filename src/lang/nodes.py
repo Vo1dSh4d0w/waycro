@@ -91,6 +91,17 @@ class StringLiteral(Node):
         return f"StringLiteral(value={self.value})"
 
 
+class BoolLiteral(Node):
+    def __init__(self, bool_tok: Token) -> None:
+        super().__init__(bool_tok.pos_start, bool_tok.pos_end)
+
+        self.value: bool = cast(bool, bool_tok.value)
+
+    @override
+    def __repr__(self) -> str:
+        return f"BoolLiteral(value={self.value})"
+
+
 class SymbolAccess(Node):
     def __init__(self, identifier_tok: Token) -> None:
         super().__init__(identifier_tok.pos_start, identifier_tok.pos_end)
