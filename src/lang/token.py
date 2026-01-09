@@ -28,6 +28,7 @@ class TokenType(Enum):
     GT = auto()
     OR = auto()
     AND = auto()
+    NOT = auto()
     DOT = auto()
     COMMA = auto()
     SEMI = auto()

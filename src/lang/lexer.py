@@ -129,9 +129,7 @@ class Lexer:
                         toks.append(Token(TokenType.NEQ, pos_start, replace(self.pos)))
                         _ = self.consume()
                     else:
-                        return None, InvalidCharError(
-                            cast(str, self.peek()), replace(self.pos)
-                        )
+                        toks.append(Token(TokenType.NOT, pos_start))
                 case "|":
                     pos_start = replace(self.pos)
                     _ = self.consume()

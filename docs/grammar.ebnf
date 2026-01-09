@@ -63,4 +63,4 @@ atom                ::= "(" expr ")"
                       | IDENT
                       ;
 
-unary               ::= ( "+" | "-" ) atom ;
+unary               ::= ( "+" | "-" | "!" ) atom ;

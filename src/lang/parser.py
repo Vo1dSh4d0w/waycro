@@ -121,6 +121,8 @@ class Parser:
                 return UnaryOperation.PLUS
             case TokenType.MINUS:
                 return UnaryOperation.MINUS
+            case TokenType.NOT:
+                return UnaryOperation.NOT
             case _:
                 raise Exception(
                     f"Cannot convert token ({tok.type}) to unary operation."
@@ -758,7 +760,7 @@ class Parser:
                 )
 
             return res.success(cast(Node, expr.result))
-        elif next_tok.type in (TokenType.PLUS, TokenType.MINUS):
+        elif next_tok.type in (TokenType.PLUS, TokenType.MINUS, TokenType.NOT):
             op = self.consume(res)
             operand = res.register(self.parse_atom())
 

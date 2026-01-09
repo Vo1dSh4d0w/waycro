@@ -39,6 +39,8 @@ class UnaryOperation(Enum):
     PLUS = auto()
     MINUS = auto()
 
+    NOT = auto()
+
 
 class SymbolDeclarationScope(Enum):
     LOCAL = auto()
