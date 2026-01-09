@@ -22,6 +22,7 @@ from lang.nodes import (
     SymbolDeclarationScope,
     UnaryOp,
     UnaryOperation,
+    UntilStatement,
     WhileStatement,
 )
 from lang.position import Position
@@ -190,6 +191,13 @@ class Parser:
                 return res.failure(while_statement.error)
             return res.success(
                 Statement(cast(StatementContent, while_statement.result))
+            )
+        elif next_tok.matches(TokenType.KEYWORD, "until"):
+            until_statement = res.register(self.parse_until_statement())
+            if until_statement.error:
+                return res.failure(until_statement.error)
+            return res.success(
+                Statement(cast(StatementContent, until_statement.result))
             )
         elif next_tok.type == TokenType.KEYWORD and next_tok.value in (
             "local",
@@ -446,6 +454,24 @@ class Parser:
 
         return res.success(
             WhileStatement(
+                keyword.pos_start, cast(Node, condition.result), cast(Node, body.result)
+            )
+        )
+
+    def parse_until_statement(self) -> ParseResult:
+        res = ParseResult()
+        keyword = self.consume(res)
+
+        condition = res.register(self.parse_expr())
+        if condition.error:
+            return res.failure(condition.error)
+
+        body = res.register(self.parse_statement())
+        if body.error:
+            return res.failure(body.error)
+
+        return res.success(
+            UntilStatement(
                 keyword.pos_start, cast(Node, condition.result), cast(Node, body.result)
             )
         )

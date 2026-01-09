@@ -6,7 +6,15 @@ from lang.position import Position
 from lang.token import Token
 
 type StatementContent = (
-    UnaryOp | BinOp | IntLiteral | Scope | SymbolDeclaration | Assignment
+    UnaryOp
+    | BinOp
+    | IntLiteral
+    | Scope
+    | SymbolDeclaration
+    | Assignment
+    | IfStatement
+    | WhileStatement
+    | UntilStatement
 )
 
 
@@ -155,6 +163,18 @@ class WhileStatement(Node):
     @override
     def __repr__(self) -> str:
         return f"WhileStatement(condition={self.condition}, body={self.body})"
+
+
+class UntilStatement(Node):
+    def __init__(self, pos_start: Position, condition: Node, body: Node) -> None:
+        super().__init__(pos_start, body.pos_end)
+
+        self.condition: Node = condition
+        self.body: Node = body
+
+    @override
+    def __repr__(self) -> str:
+        return f"UntilStatement(condition={self.condition}, body={self.body})"
 
 
 class Attribute(Node):
