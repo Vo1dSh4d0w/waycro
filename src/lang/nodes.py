@@ -145,6 +145,18 @@ class IfStatement(Node):
         return f"IfStatement(condition={self.condition}, body={self.body}, else_node={self.else_node})"
 
 
+class WhileStatement(Node):
+    def __init__(self, pos_start: Position, condition: Node, body: Node) -> None:
+        super().__init__(pos_start, body.pos_end)
+
+        self.condition: Node = condition
+        self.body: Node = body
+
+    @override
+    def __repr__(self) -> str:
+        return f"WhileStatement(condition={self.condition}, body={self.body})"
+
+
 class Attribute(Node):
     def __init__(self, lhs: Node, identifier_tok: Token) -> None:
         super().__init__(lhs.pos_start, identifier_tok.pos_end)

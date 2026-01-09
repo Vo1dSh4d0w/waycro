@@ -2,6 +2,7 @@ program             ::= { statement } EOF ;
 
 statement           ::= scope
                       | if_statement
+                      | while_statement
                       | symbol_declaration
                       | assignment
                       | expr_statement
@@ -27,6 +28,8 @@ lvalue_step         ::= member_access
 call_then_member    ::= call member_access { member_access } ;
 
 if_statement        ::= "if" expr statement [ "else" statement ] ;
+
+while_statement     ::= "while" expr statement;
 
 (* Expressions: precedence (lowest -> highest)
    1) ||, &&

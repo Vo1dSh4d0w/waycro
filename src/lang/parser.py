@@ -22,6 +22,7 @@ from lang.nodes import (
     SymbolDeclarationScope,
     UnaryOp,
     UnaryOperation,
+    WhileStatement,
 )
 from lang.position import Position
 from lang.token import Token, TokenType
@@ -183,6 +184,13 @@ class Parser:
             if if_statement.error:
                 return res.failure(if_statement.error)
             return res.success(Statement(cast(StatementContent, if_statement.result)))
+        elif next_tok.matches(TokenType.KEYWORD, "while"):
+            while_statement = res.register(self.parse_while_statement())
+            if while_statement.error:
+                return res.failure(while_statement.error)
+            return res.success(
+                Statement(cast(StatementContent, while_statement.result))
+            )
         elif next_tok.type == TokenType.KEYWORD and next_tok.value in (
             "local",
             "global",
@@ -421,6 +429,24 @@ class Parser:
                 cast(Node, condition.result),
                 cast(Node, body.result),
                 cast(Node, else_statement.result),
+            )
+        )
+
+    def parse_while_statement(self) -> ParseResult:
+        res = ParseResult()
+        keyword = self.consume(res)
+
+        condition = res.register(self.parse_expr())
+        if condition.error:
+            return res.failure(condition.error)
+
+        body = res.register(self.parse_statement())
+        if body.error:
+            return res.failure(body.error)
+
+        return res.success(
+            WhileStatement(
+                keyword.pos_start, cast(Node, condition.result), cast(Node, body.result)
             )
         )
 
